@@ -1,3 +1,6 @@
+
+
+
 //
 // WS2812 LED Analog Clock Firmware
 // Copyright (c) 2016-2018 jackw01
@@ -12,8 +15,10 @@
 
 // IO Pin Assignments
 const uint8_t pinLeds = 3;
-const uint8_t pinButton = 4;
+const uint8_t pinButton = 2;
 const uint8_t pinBrightness = 0;
+const uint8_t pinRTC = 6;
+const uint8_t pinGND = 7;
 
 // Number of LEDs in ring
 const int ledRingSize = 24;
@@ -58,7 +63,7 @@ const int buttonClickRepeatDelayMs = 1500;
 const int buttonLongPressDelayMs = 300;
 
 // Serial
-const long serialPortBaudRate = 115200;
+const long serialPortBaudRate = 9600;
 const int debugMessageIntervalMs = 2000;
 
 // Clock modes

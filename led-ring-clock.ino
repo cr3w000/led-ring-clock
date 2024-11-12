@@ -1,3 +1,5 @@
+
+
 //
 // WS2812 LED Analog Clock Firmware
 // Copyright (c) 2016-2018 jackw01
@@ -11,10 +13,10 @@
 #include <RTClib.h>
 
 #include "constants.h"
-
+const DateTime vychozi(2024,11,12,19,30,00);
 // LED ring and RTC
 CRGB leds[ledRingSize];
-RTC_DS1307 rtc;
+RTC_DS3231 rtc;
 
 // Globals to keep track of state
 int clockMode, colorScheme;
@@ -33,26 +35,47 @@ void setup() {
 	Serial.begin(serialPortBaudRate);
 
 	// Init FastLED
-	FastLED.addLeds<NEOPIXEL, pinLeds>(leds, ledRingSize);
-	FastLED.setTemperature(Halogen);
+	  FastLED.addLeds<NEOPIXEL, pinLeds>(leds, ledRingSize);
+	  FastLED.setTemperature(Halogen);
     FastLED.show();
 
-	// Connect to the RTC
+	// Power up the RTC    
+    pinMode(pinRTC, OUTPUT);
+    digitalWrite(pinRTC,1);
+    delay(50);
+	// Connect to the RTC    
     Wire.begin();
     rtc.begin();
 
 	// Set button pin
-    pinMode(pinButton, INPUT);
+    pinMode(pinButton, INPUT_PULLUP);
+        
+
+
+    pinMode(pinGND, OUTPUT);
+    digitalWrite(pinGND,0);
 
 	// Read saved config from EEPROM
     colorScheme = EEPROM.read(eepromAddrColorScheme);
     clockMode = EEPROM.read(eepromAddrClockMode);
 
+    if(!rtc.now().isValid())
+    {
+      Serial.println("Clock year set to:");
+      Serial.println(vychozi.year());
+      rtc.adjust(vychozi);
+      Serial.println("Clock set to 00:00:00");
+      //printDebugMessage();
+    }
+
     // If button is pressed at startup, light all LEDs
     if (digitalRead(pinButton) == LOW) {
+        Serial.println("Button PIN LOW");
         for (int i = 0; i < ledRingSize; i++) leds[i] = white;
         FastLED.show();
-        delay(60000);
+        rtc.adjust(vychozi);
+        Serial.println("Clock set to 00:00:00");
+        delay(6000);
     }
 }
 
@@ -61,20 +84,20 @@ void loop() {
 	if (currentTime - lastLoopTime > runLoopIntervalMs) {
 		lastLoopTime = currentTime;
 		// Handle button
-	    if (digitalRead(pinButton) == LOW && currentTime - lastButtonClickTime > buttonClickRepeatDelayMs) {
+	  if (digitalRead(pinButton) == LOW && currentTime - lastButtonClickTime > buttonClickRepeatDelayMs) {
 			delay(buttonLongPressDelayMs);
-			// Long press: clock mode, short press: color scheme
+			// Long press: clock mode, Short press: color scheme
 			if (digitalRead(pinButton) == LOW) {
 				lastButtonClickTime = currentTime;
-				colorScheme ++;
-				if (colorScheme >= colorSchemeCount + 2) colorScheme = 0; // 2 special color schemes
-				EEPROM.write(eepromAddrColorScheme, colorScheme);
-			} else {
-				clockMode ++;
+        clockMode ++;
 				if (clockMode >= ClockModeCount) clockMode = 0;
 				EEPROM.write(eepromAddrClockMode, clockMode);
+			} else {
+        colorScheme ++;
+				if (colorScheme >= colorSchemeCount + 2) colorScheme = 0; // 2 special color schemes
+				EEPROM.write(eepromAddrColorScheme, colorScheme);
 			}
-	    }
+	  }
 
 		// Print debug message
 	    if (currentTime > lastDebugMessageTime + debugMessageIntervalMs) {
@@ -132,6 +155,8 @@ void showClock() {
 void printDebugMessage() {
     Serial.print("Current date/time: ");
     DateTime now = rtc.now();
+    Serial.print("Date valid:");
+    Serial.println(rtc.now().isValid());
     Serial.print(now.year(), DEC);
     Serial.print("/");
     Serial.print(now.month(), DEC);
