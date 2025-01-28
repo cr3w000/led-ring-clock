@@ -1,6 +1,4 @@
 
-
-
 //
 // WS2812 LED Analog Clock Firmware
 // Copyright (c) 2016-2018 jackw01
@@ -76,7 +74,9 @@ typedef enum {
 } ClockMode;
 
 // Brightness
-const uint8_t minBrightness = 4;
+const uint8_t minBrightness = 20;
+const uint8_t maxBrightness = 80;
+const uint8_t switchBrightness = 100;
 
 // Run loop
 const int runLoopIntervalMs = 30;

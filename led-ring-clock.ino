@@ -1,5 +1,3 @@
-
-
 //
 // WS2812 LED Analog Clock Firmware
 // Copyright (c) 2016-2018 jackw01
@@ -8,14 +6,16 @@
 
 #include <math.h>
 #include <FastLED.h>
+
 #include <Wire.h>
 #include <EEPROM.h>
 #include <RTClib.h>
 
 #include "constants.h"
-const DateTime vychozi(2024,11,12,19,30,00);
+const DateTime vychozi(2025,1,28,20,13,00);
 // LED ring and RTC
 CRGB leds[ledRingSize];
+CRGB leds_test[ledRingSize];
 RTC_DS3231 rtc;
 
 // Globals to keep track of state
@@ -33,7 +33,6 @@ DateTime now;
 void setup() {
 	// Begin serial port
 	Serial.begin(serialPortBaudRate);
-
 	// Init FastLED
 	  FastLED.addLeds<NEOPIXEL, pinLeds>(leds, ledRingSize);
 	  FastLED.setTemperature(Halogen);
@@ -64,7 +63,7 @@ void setup() {
       Serial.println("Clock year set to:");
       Serial.println(vychozi.year());
       rtc.adjust(vychozi);
-      Serial.println("Clock set to 00:00:00");
+    //  Serial.println("Clock set to 00:00:00");
       //printDebugMessage();
     }
 
@@ -111,10 +110,13 @@ void loop() {
 	        previousBrightness[i] = previousBrightness[i - 1];
 	        sum += previousBrightness[i];
 	    }
-	    previousBrightness[0] = map(analogRead(pinBrightness), 0, 1023, minBrightness, 255);
+
+	    previousBrightness[0] = switchBrightness - map(analogRead(pinBrightness), 0, 1023, minBrightness, maxBrightness);
 	    sum += previousBrightness[0];
 	    currentBrightness = sum / 16;
-		FastLED.setBrightness(currentBrightness);
+      Serial.print("written Brightness value: ");
+      Serial.println(currentBrightness);
+  		FastLED.setBrightness(currentBrightness);
 
 		// Get time and calculate milliseconds value that is synced with the RTC's second count
 		now = rtc.now();
@@ -129,7 +131,9 @@ void loop() {
 
 		// Show clock
 		clearLeds();
-	    showClock();
+    showClock();
+    
+     
 	}
 }
 
